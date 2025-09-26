@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Fashion Portfolio</title>
+    <!-- Use Tailwind CSS from a CDN for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Link to the Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Set a default font and scroll behavior */
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+            background-color: #0a0a0a; /* Ensuring the base background is dark */
+            color: white;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a; /* Very dark background */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a; /* Dark gray for thumb */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #44403c; /* Lighter gray on hover */
+        }
+        /* Full-screen video background styling for the hero section */
+        #hero {
+            position: relative;
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+        }
+        #hero video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -1;
+            transform: translateX(-50%) translateY(-50%);
+            object-fit: contain;
+        }
+        #hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Dark overlay to make text readable */
+            z-index: 0;
+        }
+        .hero-content {
+            z-index: 10;
+            position: relative;
+        }
+        /* General Styles for Full-Screen Carousels */
+        .fullscreen-carousel {
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        .fullscreen-carousel .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: scale(1.1);
+            transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+        }
+        .fullscreen-carousel .slide.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .fullscreen-carousel .slide video,
+        .fullscreen-carousel .slide img {
+            width: 100%;
+            height: 100%;
+            /* UPDATE: Changed to 'contain' to prevent images/videos from being cropped */
+            object-fit: contain; 
+        }
+        .fullscreen-carousel .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 10;
+        }
+        .fullscreen-carousel .text-content {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+        }
+        .fullscreen-carousel .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 1rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .fullscreen-carousel .nav-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+        .fullscreen-carousel .prev-btn { left: 2rem; }
+        .fullscreen-carousel .next-btn { right: 2rem; }
+        .fullscreen-carousel .dots-container {
+            position: absolute;
+            bottom: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .fullscreen-carousel .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .fullscreen-carousel .dot.active {
+            background: white;
+        }
+        
+        @keyframes jump {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0); }
+        }
+        .jumping-logo {
+            animation: jump 1s ease-in-out infinite;
+        }
+
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .game-canvas {
+            border: 2px solid #5a67d8;
+            background-color: #0b1a53;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.5rem;
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2d3748;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            z-index: 10000;
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white">
+
+    <header class="bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-50 shadow-lg">
+        <nav class="container mx-auto p-4 flex justify-between items-center">
+            <a href="#hero" class="text-xl font-bold text-teal-400">
+                <img src="img/logo.png" alt="Brand Logo" class="h-8 w-auto">
+            </a>
+            <button id="mobile-menu-button" class="md:hidden p-2 rounded-lg text-white hover:text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-teal-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
+            </button>
+            <div id="desktop-menu" class="hidden md:flex space-x-4">
+                <a href="#about" class="px-4 py-2 rounded-full hover:bg-zinc-800 transition-colors">About</a>
+                <a href="#my-work" class="px-4 py-2 rounded-full hover:bg-zinc-800 transition-colors">My Work</a>
+                <a href="#gallery" class="px-4 py-2 rounded-full hover:bg-zinc-800 transition-colors">Gallery</a>
+                <a href="#contact" class="px-4 py-2 rounded-full hover:bg-zinc-800 transition-colors">Contact</a>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden bg-zinc-800 py-2">
+            <a href="#about" class="block px-4 py-2 hover:bg-zinc-700 transition-colors">About</a>
+            <a href="#my-work" class="block px-4 py-2 hover:bg-zinc-700 transition-colors">My Work</a>
+            <a href="#gallery" class="block px-4 py-2 hover:bg-zinc-700 transition-colors">Gallery</a>
+            <a href="#contact" class="block px-4 py-2 hover:bg-zinc-700 transition-colors">Contact</a>
+        </div>
+    </header>
+
+    <main>
+
+        <section id="hero">
+            <video autoplay muted loop playsinline>
+                <source src="https://res.cloudinary.com/dmyogqtne/video/upload/v1755334343/NINETOUR_gkdpbh.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="hero-content space-y-6 max-w-2xl text-center p-4">
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight">NINE by HIMANSHI SETA</h1>
+                <img id="mainLogo" src="https://res.cloudinary.com/dmyogqtne/image/upload/v1755334742/LOGONINE_e9i0cy.png" alt="Brand Logo" class="mx-auto w-40 md:w-56 jumping-logo cursor-pointer">
+                <a href="#my-work" class="inline-block px-8 py-3 bg-gradient-to-r from-teal-500 to-sky-500 text-white font-bold rounded-full shadow-lg hover:from-teal-600 hover:to-sky-600 transition-transform transform hover:scale-105">
+                    View My Work
+                </a>
+            </div>
+        </section>
+
+        <section id="about" class="container mx-auto p-4 py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-white">About Me</h2>
+                <p class="text-lg text-slate-400 mt-2 max-w-3xl mx-auto">Hi, I’m Himanshi Seta, a 2nd-year B.Tech student in Electronics & Telecommunication who also wears many creative hats. Alongside my engineering journey, I work as a freelance fashion designer, social media manager, and UI/UX creative.</p>
+            </div>
+            <div class="flex flex-col md:flex-row items-center md:space-x-12">
+                <div class="w-full md:w-1/2 mb-8 md:mb-0">
+                    <img src="https://res.cloudinary.com/dmyogqtne/image/upload/v1755335962/33D4D005-B557-41C0-ABD0-E02DCE6BCE92_2_pfnlhe.jpg" alt="Your Photo" class="rounded-lg shadow-xl w-full">
+                </div>
+                <div class="w-full md:w-1/2">
+                    <p class="text-lg text-slate-300 leading-relaxed">
+                        I’m a freelance fashion designer, social media manager, and UI/UX creative who loves blending aesthetics with strategy. From sketching bold streetwear concepts to designing digital experiences that feel alive, I thrive at the crossroads of style, storytelling, and technology.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="my-work">
+             <div id="carousel" class="fullscreen-carousel shadow-2xl">
+                <div class="slide active">
+                    <video autoplay muted loop playsinline>
+                        <source src="https://res.cloudinary.com/dmyogqtne/video/upload/v1755343559/1stslide_rfazdz.mp4" type="video/mp4">
+                    </video>
+                    <div class="overlay"></div>
+                    <div class="text-content">
+                        <h3 class="text-3xl sm:text-4xl font-bold text-white mb-2">Plaid Patchwork Distressed Denim Jacket</h3>
+                        <p class="text-lg text-slate-300">Rugged denim meets classic plaid in this standout jacket. Designed with distressed detailing, asymmetrical plaid panels, and a relaxed fit for effortless streetwear style.</p>
+                    </div>
+                </div>
+                <div class="slide">
+                    <video autoplay muted loop playsinline>
+                        <source src="https://res.cloudinary.com/dmyogqtne/video/upload/v1755340352/Untitled_design_ki1fkf.mp4" type="video/mp4">
+                    </video>
+                    <div class="overlay"></div>
+                    <div class="text-content">
+                        <h3 class="text-3xl sm:text-4xl font-bold text-white mb-2">Echoes of the Sea</h3>
+                        <p class="text-lg text-slate-300">This design reflects the mystical, earthy beauty of the sea—from sandy textures to starfish-like imprints and ocean-inspired jewelry.</p>
+                    </div>
+                </div>
+                <button id="prev-btn" class="nav-btn prev-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button id="next-btn" class="nav-btn next-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+                <div id="carousel-dots-container" class="dots-container"></div>
+            </div>
+        </section>
+        
+        <section id="gallery">
+            <div id="gallery-carousel" class="fullscreen-carousel shadow-2xl">
+                <div class="slide active">
+                    <img src="https://res.cloudinary.com/dmyogqtne/image/upload/v1755350558/page2models_v6b6xo.png" alt="Gallery Image 1">
+                </div>
+                <div class="slide">
+                    <img src="https://res.cloudinary.com/dmyogqtne/image/upload/v1755350542/page1models_i7hs8f.png" alt="Gallery Image 2">
+                </div>
+                <div class="slide">
+                    <img src="https://res.cloudinary.com/dmyogqtne/image/upload/v1755349737/techsnine_zieazh.png" alt="Gallery Image 3">
+                </div>
+                <div class="slide">
+                    <img src="https://res.cloudinary.com/dmyogqtne/image/upload/v1755350527/findes_edp0xg.png" alt="Gallery Image 4">
+                </div>
+                <button id="gallery-prev-btn" class="nav-btn prev-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button id="gallery-next-btn" class="nav-btn next-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+                <div id="gallery-dots-container" class="dots-container"></div>
+            </div>
+        </section>
+
+        <section id="contact" class="container mx-auto p-4 py-20 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Get in Touch</h2>
+            <p class="text-lg text-slate-400 mt-2">
+                I'm currently open for collaborations, commissions, and new opportunities.
+            </p>
+            <div class="mt-8 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8">
+                <a href="mailto:himanshiseta9@gmail.com" class="inline-flex items-center text-white px-6 py-3 rounded-full bg-teal-500 hover:bg-teal-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail mr-2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    Email Me
+                </a>
+                <a href="https://www.instagram.com/bleaumatter" target="_blank" class="inline-flex items-center text-slate-300 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-instagram"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37a4 4 0 1 1-6.5-4.5"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                    @bleaumatter
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <div id="gameOverlay" class="game-overlay">
+        <h1 class="text-3xl font-bold text-indigo-400">Interactive Pool</h1>
+        <canvas id="gameCanvas" class="game-canvas"></canvas>
+        <button id="closeGameButton" class="mt-4 px-6 py-2 bg-red-500 rounded-lg hover:bg-red-600 transition-colors">Close Game</button>
+    </div>
+    
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button id="messageCloseButton" class="mt-4 px-4 py-2 bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors">OK</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Function to initialize a carousel
+            function initCarousel(carouselId) {
+                const carouselElement = document.getElementById(carouselId);
+                if (!carouselElement) return;
+
+                const slides = carouselElement.querySelectorAll('.slide');
+                const prevBtn = carouselElement.querySelector('.prev-btn');
+                const nextBtn = carouselElement.querySelector('.next-btn');
+                const dotsContainer = carouselElement.querySelector('.dots-container');
+                
+                let currentSlide = 0;
+                let slideInterval;
+
+                if (slides.length > 0 && prevBtn && nextBtn && dotsContainer) {
+                    function createDots() {
+                        dotsContainer.innerHTML = ''; // Clear existing dots
+                        slides.forEach((_, index) => {
+                            const dot = document.createElement('div');
+                            dot.classList.add('dot');
+                            if (index === 0) dot.classList.add('active');
+                            dot.addEventListener('click', () => {
+                                goToSlide(index);
+                                resetInterval();
+                            });
+                            dotsContainer.appendChild(dot);
+                        });
+                    }
+            
+                    function goToSlide(n) {
+                        slides[currentSlide].classList.remove('active');
+                        dotsContainer.children[currentSlide].classList.remove('active');
+                        currentSlide = (n + slides.length) % slides.length;
+                        slides[currentSlide].classList.add('active');
+                        dotsContainer.children[currentSlide].classList.add('active');
+                    }
+            
+                    function nextSlide() { goToSlide(currentSlide + 1); }
+                    function prevSlide() { goToSlide(currentSlide - 1); }
+            
+                    nextBtn.addEventListener('click', () => { nextSlide(); resetInterval(); });
+                    prevBtn.addEventListener('click', () => { prevSlide(); resetInterval(); });
+            
+                    function resetInterval() {
+                        clearInterval(slideInterval);
+                        const intervalTime = carouselId === 'carousel' ? 7000 : 5000;
+                        slideInterval = setInterval(nextSlide, intervalTime);
+                    }
+            
+                    createDots();
+                    resetInterval();
+                }
+            }
+
+            // Initialize both carousels
+            initCarousel('carousel');
+            initCarousel('gallery-carousel');
+
+            // Smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetElement = document.querySelector(this.getAttribute('href'));
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    document.getElementById('mobile-menu').classList.add('hidden');
+                });
+            });
+
+            // Mobile menu
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Game Logic
+            const bouncingLogo = document.getElementById('mainLogo');
+            const gameOverlay = document.getElementById('gameOverlay');
+            const closeGameButton = document.getElementById('closeGameButton');
+            const gameCanvas = document.getElementById('gameCanvas');
+            const ctx = gameCanvas.getContext('2d');
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const messageCloseButton = document.getElementById('messageCloseButton');
+
+            function showMessage(msg) {
+                messageText.textContent = msg;
+                messageBox.style.display = 'block';
+            }
+            
+            messageCloseButton.addEventListener('click', () => {
+                messageBox.style.display = 'none';
+            });
+            
+            bouncingLogo.addEventListener('click', () => {
+                gameOverlay.style.display = 'flex';
+                startGame();
+            });
+            
+            closeGameButton.addEventListener('click', () => {
+                gameOverlay.style.display = 'none';
+                stopGame();
+            });
+
+            let gameRunning = false;
+            let gameLoopId;
+            let balls = [];
+            let holes = [];
+            const ballRadius = 15;
+            let cueBall = null;
+            let cueBallStartX, cueBallStartY;
+            let cueStick = { active: false, startPos: { x: 0, y: 0 }, endPos: { x: 0, y: 0 } };
+            
+            function startGame() {
+                if (gameRunning) return;
+                gameRunning = true;
+                resizeGameCanvas();
+                initBalls();
+                gameLoop();
+            }
+
+            function stopGame() {
+                if (!gameRunning) return;
+                gameRunning = false;
+                cancelAnimationFrame(gameLoopId);
+            }
+            
+            function resizeGameCanvas() {
+                const size = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.8);
+                gameCanvas.width = size;
+                gameCanvas.height = size * 0.6;
+                const holeRadius = ballRadius * 1.5;
+                holes = [
+                    { x: holeRadius, y: holeRadius, radius: holeRadius },
+                    { x: gameCanvas.width / 2, y: holeRadius * 0.8, radius: holeRadius },
+                    { x: gameCanvas.width - holeRadius, y: holeRadius, radius: holeRadius },
+                    { x: holeRadius, y: gameCanvas.height - holeRadius, radius: holeRadius },
+                    { x: gameCanvas.width / 2, y: gameCanvas.height - (holeRadius * 0.8), radius: holeRadius },
+                    { x: gameCanvas.width - holeRadius, y: gameCanvas.height - holeRadius, radius: holeRadius }
+                ];
+            }
+
+            window.addEventListener('resize', resizeGameCanvas);
+
+            class Ball {
+                constructor(x, y, radius, color) {
+                    this.x = x; this.y = y; this.radius = radius; this.color = color;
+                    this.dx = 0; this.dy = 0; this.friction = 0.985; this.mass = 1;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                    ctx.closePath();
+                }
+                update() {
+                    this.x += this.dx; this.y += this.dy;
+                    this.dx *= this.friction; this.dy *= this.friction;
+                    if (Math.abs(this.dx) < 0.05) this.dx = 0;
+                    if (Math.abs(this.dy) < 0.05) this.dy = 0;
+                    if (this.x + this.radius > gameCanvas.width || this.x - this.radius < 0) this.dx = -this.dx * 0.9;
+                    if (this.y + this.radius > gameCanvas.height || this.y - this.radius < 0) this.dy = -this.dy * 0.9;
+                }
+            }
+
+            function initBalls() {
+                balls = [];
+                cueBallStartX = gameCanvas.width / 4;
+                cueBallStartY = gameCanvas.height / 2;
+                cueBall = new Ball(cueBallStartX, cueBallStartY, ballRadius, 'white');
+                balls.push(cueBall);
+                const pyramidSize = 4;
+                const startX = gameCanvas.width * 0.7;
+                const startY = gameCanvas.height / 2;
+                let ballIndex = 0;
+                const colors = ['#facc15','#ef4444','#8b5cf6','#22c55e','#f97316','#3b82f6','#ec4899','#14b8a6','#6b7280','#a855f7'];
+                for (let i = 0; i < pyramidSize; i++) {
+                    for (let j = 0; j <= i; j++) {
+                        const x = startX + i * ballRadius * 2 * 0.866;
+                        const y = startY - i * ballRadius + j * ballRadius * 2;
+                        if (ballIndex < colors.length) {
+                            balls.push(new Ball(x, y, ballRadius, colors[ballIndex++]));
+                        }
+                    }
+                }
+            }
+
+            function resolveCollision(ball1, ball2) {
+                const dx = ball2.x - ball1.x, dy = ball2.y - ball1.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < ball1.radius + ball2.radius) {
+                    const normalX = dx / distance, normalY = dy / distance;
+                    const tangentX = -normalY, tangentY = normalX;
+                    const v1n = ball1.dx * normalX + ball1.dy * normalY;
+                    const v1t = ball1.dx * tangentX + ball1.dy * tangentY;
+                    const v2n = ball2.dx * normalX + ball2.dy * normalY;
+                    const v2t = ball2.dx * tangentX + ball2.dy * tangentY;
+                    ball1.dx = normalX * v2n + tangentX * v1t;
+                    ball1.dy = normalY * v2n + tangentY * v1t;
+                    ball2.dx = normalX * v1n + tangentX * v2t;
+                    ball2.dy = normalY * v1n + tangentY * v2t;
+                    const overlap = ball1.radius + ball2.radius - distance;
+                    const sepX = overlap * normalX * 0.5, sepY = overlap * normalY * 0.5;
+                    ball1.x -= sepX; ball1.y -= sepY;
+                    ball2.x += sepX; ball2.y += sepY;
+                }
+            }
+            
+            function handleMouseEvents(e) {
+                const rect = gameCanvas.getBoundingClientRect();
+                return { mouseX: e.clientX - rect.left, mouseY: e.clientY - rect.top };
+            }
+
+            gameCanvas.addEventListener('mousedown', (e) => {
+                const { mouseX, mouseY } = handleMouseEvents(e);
+                if (balls.some(b => b.dx !== 0 || b.dy !== 0)) return;
+                const dist = Math.sqrt(Math.pow(mouseX - cueBall.x, 2) + Math.pow(mouseY - cueBall.y, 2));
+                if (dist < cueBall.radius * 2) {
+                    cueStick.active = true;
+                    cueStick.startPos = { x: cueBall.x, y: cueBall.y };
+                    cueStick.endPos = { x: mouseX, y: mouseY };
+                }
+            });
+
+            gameCanvas.addEventListener('mousemove', (e) => {
+                if (cueStick.active) {
+                    const { mouseX, mouseY } = handleMouseEvents(e);
+                    cueStick.endPos = { x: mouseX, y: mouseY };
+                }
+            });
+
+            gameCanvas.addEventListener('mouseup', (e) => {
+                if (cueStick.active) {
+                    const { mouseX, mouseY } = handleMouseEvents(e);
+                    cueBall.dx = (cueStick.startPos.x - mouseX) * 0.1;
+                    cueBall.dy = (cueStick.startPos.y - mouseY) * 0.1;
+                    cueStick.active = false;
+                }
+            });
+
+            function gameLoop() {
+                if (!gameRunning) return;
+                ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+                ctx.fillStyle = '#0b1a53';
+                ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+                ctx.fillStyle = 'black';
+                holes.forEach(hole => {
+                    ctx.beginPath();
+                    ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                for (let i = balls.length - 1; i >= 0; i--) {
+                    const ball = balls[i];
+                    ball.update();
+                    ball.draw();
+                    for (const hole of holes) {
+                        const dist = Math.sqrt(Math.pow(ball.x - hole.x, 2) + Math.pow(ball.y - hole.y, 2));
+                        if (dist < hole.radius) {
+                            if (ball === cueBall) {
+                                cueBall.x = cueBallStartX; cueBall.y = cueBallStartY;
+                                cueBall.dx = 0; cueBall.dy = 0;
+                            } else {
+                                balls.splice(i, 1);
+                                if (balls.length === 1) {
+                                    showMessage('You Win!');
+                                    stopGame();
+                                    setTimeout(() => {
+                                        gameOverlay.style.display = 'none';
+                                        messageBox.style.display = 'none';
+                                    }, 2000);
+                                }
+                            }
+                            break; 
+                        }
+                    }
+                }
+
+                for (let i = 0; i < balls.length; i++) {
+                    for (let j = i + 1; j < balls.length; j++) {
+                        resolveCollision(balls[i], balls[j]);
+                    }
+                }
+
+                if (cueStick.active) {
+                    ctx.beginPath();
+                    ctx.moveTo(cueStick.endPos.x, cueStick.endPos.y);
+                    ctx.lineTo(cueStick.startPos.x, cueStick.startPos.y);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                }
+                gameLoopId = requestAnimationFrame(gameLoop);
+            }
+        });
+    </script>
+</body>
+</html>
